@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>지도 불러오기</title>
+  <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=2lhimp3vcd"></script>
+</head>
+
+<body>
+  <h1>지도 불러오기</h1>
+
+  <div id="map" style="width: 800px; height: 600px;"></div>
+
+  <button id="saveButton">저장하기</button>
+
+  <script type="text/javascript">
+    let savedMarkers = [];
+
+    // DOM이 로드되면 네이버 지도 초기화 함수 호출
+    document.addEventListener('DOMContentLoaded', function () {
+      // 초기 지도 상태
+      const mapOptions = {
+        // 초기 지도 좌표 : 변경된 위치 좌표
+        center: new naver.maps.LatLng(37.580541, 126.922365),
+        // 초기 확대량
+        zoom: 17,
+      };
+
+      // 네이버 지도 객체 생성
+      const naverMap = new naver.maps.Map('map', mapOptions);
+
+      // 초기 지도 좌표에 빨간 마커 추가
+      addMarkerAtPosition(naverMap, mapOptions.center, 'red');
+
+      // 이전에 저장된 마커들을 불러옴
+      loadSavedMarkers(naverMap);
+
+      // 저장 버튼 클릭 이벤트 처리
+      document.getElementById('saveButton').addEventListener('click', function () {
+        // 현재 지도의 중심 좌표를 가져옴
+        const mapCenter = naverMap.getCenter();
+
+        // 중심 좌표에 파란 마커 추가
+        const blueMarker = addMarkerAtPosition(naverMap, mapCenter, 'blue');
+
+        // 파란 마커를 저장된 마커 배열에 추가
+        savedMarkers.push(blueMarker);
+
+        // 변경된 마커 정보를 localStorage에 저장
+        saveMarkersToLocalStorage();
+      });
+    });
+
+    function addMarkerAtPosition(naverMap, position, color) {
+      // 마커 색상에 따라 스타일을 설정
+      let markerStyle;
+      if (color === 'red') {
+        markerStyle = {
+          content: '<div style="width: 20px; height: 20px; background-color: red; border-radius: 50%;"></div>',
+          anchor: new naver.maps.Point(10, 10),
+        };
+      } else if (color === 'blue') {
+        markerStyle = {
+          content: '<div style="width: 20px; height: 20px; background-color: blue; border-radius: 50%;"></div>',
+          anchor: new naver.maps.Point(10, 10),
+        };
+      }
+
+      // 좌표를 사용하여 마커 생성
+      const marker = new naver.maps.Marker({
+        position: position,
+        map: naverMap,
+        icon: markerStyle,
+      });
+
+      return marker;
+    }
+
+    function loadSavedMarkers(naverMap) {
+      const savedMarkersJSON = localStorage.getItem('savedMarkers');
+      if (savedMarkersJSON) {
+        const savedMarkersArray = JSON.parse(savedMarkersJSON);
+        for (const markerData of savedMarkersArray) {
+          const marker = addMarkerAtPosition(naverMap, markerData.position, 'blue');
+          savedMarkers.push(marker);
+        }
+      }
+    }
+
+    function saveMarkersToLocalStorage() {
+      const markersDataArray = savedMarkers.map(marker => ({
+        position: marker.getPosition(),
+      }));
+      const markersDataJSON = JSON.stringify(markersDataArray);
+      localStorage.setItem('savedMarkers', markersDataJSON);
+    }
+  </script>
+</body>
+
+</html>
